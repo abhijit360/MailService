@@ -1,3 +1,3 @@
-module booking-app
+module mail-server
 
 go 1.21.5
