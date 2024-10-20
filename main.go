@@ -7,15 +7,24 @@ import (
 	"io"
 	"net/http"
 	"os"
+	gomail "gopkg.in/mail.v2"
+	"github.com/joho/godotenv"
+	
 )
 
 type ContactForm struct {
-	From    string
-	To      string
+	From      string
+	Subject string
 	Content string
 }
 
 func main() {
+	err := godotenv.Load(".env")
+	if err != nil {
+		fmt.Println("Please set up an .env file with a key of 'my mail' = name@domain.com")
+	}
+	MY_MAIL := os.Getenv("my_mail")
+
 	receiveMail := func(w http.ResponseWriter, request *http.Request) {
 		if request.Method == "GET" {
 			w.WriteHeader(http.StatusBadRequest)
@@ -35,11 +44,38 @@ func main() {
 				http.Error(w, "Invalid JSON format", http.StatusBadRequest)
 				return
 			}
+
 			fmt.Print(contactData)
 			w.WriteHeader(http.StatusOK)
 			w.Header().Set("Content-Type", "application/json")
 			jsonEncoder := json.NewEncoder(w)
 			jsonEncoder.Encode("Message: Email Received.")
+			
+			m := gomail.NewMessage()
+			//
+			m.SetHeader("From", MY_MAIL)
+			m.SetHeader("To",MY_MAIL)
+			m.setHeader("Subject", "Personal Website Contact Me Form")
+			m.setBody("text/html", fmt.Sprintf("Message from : %v\n Subject: %v \nBody: %v",contactData.From, contactData.Subject,contactData.Content))
+			d := gomail.NewDialer("smtp.gmail.com", 587, userName, password)
+			if err := d.DialAndSend(m); err != nil{
+				log.Fatal("Failed Sending email to personal email",err)
+			}
+
+			// send message to sender that I have received email
+			m.SetHeader("From", MY_MAIL)
+			m.SetHeader("To", contactData.From)
+			m.SetHeader("Subject", contactData.Subject)
+			m.SetBody("text/html", "Hello!\n
+				Thank you for reaching out to me through the contact me form on my website! \n
+				This is an automated response to let you know that I have received the email and I will get back to you shortly.\n
+				Yours Sincerely,\n
+				Abhijit")
+
+			d := gomail.NewDialer("smtp.gmail.com", 587, userName, password)
+			if err := d.DialAndSend(m); err != nil{
+				log.Fatal("Failed sending update to client",err)
+			}
 		}
 	}
 	http.HandleFunc("/receive", receiveMail)
