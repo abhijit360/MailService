@@ -22,9 +22,10 @@ type ContactForm struct {
 func main() {
 	err := godotenv.Load(".env")
 	if err != nil {
-		fmt.Println("Please set up an .env file with a key of 'my mail' = name@domain.com")
+		fmt.Println("Please set up an .env file with a key of 'my mail' = name@domain.com and 'my_password' = your email password")
 	}
 	MY_MAIL := os.Getenv("my_mail")
+	PASSWORD := os.Getenv("my_password")
 
 	receiveMail := func(w http.ResponseWriter, request *http.Request) {
 		if request.Method == "GET" {
@@ -58,7 +59,7 @@ func main() {
 			m.SetHeader("To",MY_MAIL)
 			m.SetHeader("Subject", "Personal Website Contact Me Form")
 			m.SetBody("text/html", fmt.Sprintf("Message from : %v\n Subject: %v \nBody: %v",contactData.From, contactData.Subject,contactData.Content))
-			d := gomail.NewDialer("smtp.gmail.com", 587, userName, password)
+			d := gomail.NewDialer("smtp.gmail.com", 587, MY_MAIL,PASSWORD)
 			if err := d.DialAndSend(m); err != nil{
 				log.Fatal("Failed Sending email to personal email",err)
 			}
@@ -73,7 +74,7 @@ func main() {
 				Yours Sincerely,<br>
 				Abhijit`)
 
-			d = gomail.NewDialer("smtp.gmail.com", 587, userName, password)
+			d = gomail.NewDialer("smtp.gmail.com", 587, MY_MAIL, PASSWORD)
 			if err := d.DialAndSend(m); err != nil{
 				log.Fatal("Failed sending update to client",err)
 			}
