@@ -14,9 +14,9 @@ import (
 )
 
 type ContactForm struct {
-	From      string
-	Subject string
-	Content string
+	From    string `json:"from,omitempty"`
+	Subject string `json:"subject,omitempty"`
+	Content string `json:"content,omitempty"`
 }
 
 func main() {
@@ -42,12 +42,12 @@ func main() {
 			}
 
 			err = json.Unmarshal(body, &contactData) // UnmarshaIlling here
+
 			if err != nil {
 				http.Error(w, "Invalid JSON format", http.StatusBadRequest)
 				return
 			}
 
-			fmt.Print(contactData)
 			w.WriteHeader(http.StatusOK)
 			w.Header().Set("Content-Type", "application/json")
 			jsonEncoder := json.NewEncoder(w)
@@ -68,9 +68,11 @@ func main() {
 			m.SetHeader("From", MY_MAIL)
 			m.SetHeader("To", contactData.From)
 			m.SetHeader("Subject", contactData.Subject)
-			m.SetBody("text/html", `Hello!<br>
+			m.SetBody("text/html", `Hello There,<br>
+				<br>
 				Thank you for reaching out to me through the contact form on my website!<br>
 				This is an automated response to let you know that I have received the email and I will get back to you shortly.<br>
+				<br>
 				Yours Sincerely,<br>
 				Abhijit`)
 
