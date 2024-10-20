@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"log"
 	gomail "gopkg.in/mail.v2"
 	"github.com/joho/godotenv"
 	
@@ -55,8 +56,8 @@ func main() {
 			//
 			m.SetHeader("From", MY_MAIL)
 			m.SetHeader("To",MY_MAIL)
-			m.setHeader("Subject", "Personal Website Contact Me Form")
-			m.setBody("text/html", fmt.Sprintf("Message from : %v\n Subject: %v \nBody: %v",contactData.From, contactData.Subject,contactData.Content))
+			m.SetHeader("Subject", "Personal Website Contact Me Form")
+			m.SetBody("text/html", fmt.Sprintf("Message from : %v\n Subject: %v \nBody: %v",contactData.From, contactData.Subject,contactData.Content))
 			d := gomail.NewDialer("smtp.gmail.com", 587, userName, password)
 			if err := d.DialAndSend(m); err != nil{
 				log.Fatal("Failed Sending email to personal email",err)
@@ -66,13 +67,13 @@ func main() {
 			m.SetHeader("From", MY_MAIL)
 			m.SetHeader("To", contactData.From)
 			m.SetHeader("Subject", contactData.Subject)
-			m.SetBody("text/html", "Hello!\n
-				Thank you for reaching out to me through the contact me form on my website! \n
-				This is an automated response to let you know that I have received the email and I will get back to you shortly.\n
-				Yours Sincerely,\n
-				Abhijit")
+			m.SetBody("text/html", `Hello!<br>
+				Thank you for reaching out to me through the contact form on my website!<br>
+				This is an automated response to let you know that I have received the email and I will get back to you shortly.<br>
+				Yours Sincerely,<br>
+				Abhijit`)
 
-			d := gomail.NewDialer("smtp.gmail.com", 587, userName, password)
+			d = gomail.NewDialer("smtp.gmail.com", 587, userName, password)
 			if err := d.DialAndSend(m); err != nil{
 				log.Fatal("Failed sending update to client",err)
 			}
@@ -80,7 +81,7 @@ func main() {
 	}
 	http.HandleFunc("/receive", receiveMail)
 
-	err := http.ListenAndServe(":8080", nil)
+	err = http.ListenAndServe(":8080", nil)
 	if errors.Is(err, http.ErrServerClosed) {
 		fmt.Printf("server closed\n")
 	} else if err != nil {
