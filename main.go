@@ -5,18 +5,40 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
-	"log"
-	gomail "gopkg.in/mail.v2"
 	"github.com/joho/godotenv"
-	
+	"golang.org/x/time/rate"
+	gomail "gopkg.in/mail.v2"
 )
 
 type ContactForm struct {
 	From    string `json:"from,omitempty"`
 	Subject string `json:"subject,omitempty"`
 	Content string `json:"content,omitempty"`
+}
+
+type Message struct {
+	Status string `json:"status"`
+	Body string `json:"body"`
+}
+
+func rateLimiter(eventRate float64, burstRate int ,function func (w http.ResponseWriter,r *http.Request)) http.Handler{
+	limiter := rate.NewLimiter(rate.Limit(eventRate),burstRate) // rate of 
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request){
+		if !limiter.Allow(){
+			errorMessage := Message{
+				Status: "Request Failed",
+				Body: "You are being rate limited.",
+			}
+			w.WriteHeader(http.StatusTooManyRequests)
+			json.NewEncoder(w).Encode(&errorMessage)
+			return
+		}else{
+			function(w,r)
+		}
+	})
 }
 
 func main() {
@@ -82,7 +104,7 @@ func main() {
 			}
 		}
 	}
-	http.HandleFunc("/receive", receiveMail)
+	http.Handle("/receive", rateLimiter(1,2,receiveMail))
 
 	err = http.ListenAndServe(":8080", nil)
 	if errors.Is(err, http.ErrServerClosed) {
