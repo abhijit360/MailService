@@ -6,8 +6,11 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"os"
+	"sync"
+	"time"
 	"github.com/joho/godotenv"
 	"golang.org/x/time/rate"
 	gomail "gopkg.in/mail.v2"
@@ -24,10 +27,25 @@ type Message struct {
 	Body string `json:"body"`
 }
 
-func rateLimiter(eventRate float64, burstRate int ,function func (w http.ResponseWriter,r *http.Request)) http.Handler{
-	limiter := rate.NewLimiter(rate.Limit(eventRate),burstRate) // rate of 
+var ipTracker sync.Map
+
+
+func rateLimiter(eventPerMinute float64, burstRate int ,function func (w http.ResponseWriter,r *http.Request)) http.Handler{
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request){
-		if !limiter.Allow(){
+		ip,_,err := net.SplitHostPort(r.RemoteAddr)
+		if err != nil{
+			fmt.Println("error getting ip")
+		}
+		var currentTimer *rate.Limiter
+		if val, ok := ipTracker.Load(ip); ok{
+			currentTimer, ok  = val.(*rate.Limiter)
+		}else {
+			newLimiter := rate.NewLimiter(rate.Every(time.Minute/eventPerMinute),burstRate)
+			ipTracker.Store(ip,newLimiter)
+			currentTimer = *newLimiter
+		}
+
+		if !currentTimer.Allow(){
 			errorMessage := Message{
 				Status: "Request Failed",
 				Body: "You are being rate limited.",
