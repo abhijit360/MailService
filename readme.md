@@ -12,3 +12,4 @@ my_mail= Username
 my_password= Password (create an APP password. Not your email's password)
 ```
 
+You should also change the variable for salutationName to sign off by a different name/moniker

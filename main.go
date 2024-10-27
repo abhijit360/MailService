@@ -67,6 +67,7 @@ func main() {
 	}
 	MY_MAIL := os.Getenv("my_mail")
 	PASSWORD := os.Getenv("my_password")
+	SalutationName := "Abhijit"
 
 	receiveMail := func(w http.ResponseWriter, request *http.Request) {
 		if request.Method == "GET" {
@@ -109,13 +110,13 @@ func main() {
 			m.SetHeader("From", MY_MAIL)
 			m.SetHeader("To", contactData.From)
 			m.SetHeader("Subject", contactData.Subject)
-			m.SetBody("text/html", `Hello There,<br>
-				<br>
-				Thank you for reaching out to me through the contact form on my website!<br>
-				This is an automated response to let you know that I have received the email and I will get back to you shortly.<br>
-				<br>
-				Yours Sincerely,<br>
-				Abhijit`)
+			m.SetBody("text/html",fmt.Sprintf("text/html", `Hello There,<br>
+			<br>
+			Thank you for reaching out to me through the contact form on my website!<br>
+			This is an automated response to let you know that I have received the email and I will get back to you shortly.<br>
+			<br>
+			Yours Sincerely,<br>
+			%v`,SalutationName))
 
 			d = gomail.NewDialer("smtp.gmail.com", 587, MY_MAIL, PASSWORD)
 			if err := d.DialAndSend(m); err != nil{
