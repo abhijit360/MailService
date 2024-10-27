@@ -38,11 +38,12 @@ func rateLimiter(eventPerMinute float64, burstRate int ,function func (w http.Re
 		}
 		var currentTimer *rate.Limiter
 		if val, ok := ipTracker.Load(ip); ok{
-			currentTimer, ok  = val.(*rate.Limiter)
+			currentTimer, _ = val.(*rate.Limiter)
 		}else {
-			newLimiter := rate.NewLimiter(rate.Every(time.Minute/eventPerMinute),burstRate)
+			myCustomRate := rate.Every(time.Minute/time.Duration(eventPerMinute))
+			newLimiter := rate.NewLimiter(myCustomRate,burstRate)
 			ipTracker.Store(ip,newLimiter)
-			currentTimer = *newLimiter
+			currentTimer = newLimiter
 		}
 
 		if !currentTimer.Allow(){
